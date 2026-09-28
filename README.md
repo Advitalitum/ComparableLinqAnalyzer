@@ -20,10 +20,14 @@ If the type is **not** comparable, the analyzer reports an error.
 ```csharp
 var items = new List<NotComparable>();   // NotComparable does not implement IComparable
 
-var a = items.Max();                      // ❌ diagnostic
-var b = items.MinBy(i => i);              // ❌ diagnostic
+var a = items.MinBy(i => i);              // ❌ diagnostic
+var b = items.MaxBy(i => i);              // ❌ diagnostic
 var c = items.OrderBy(i => i);            // ❌ diagnostic
-var d = items.OrderDescending();          // ❌ diagnostic
+var d = items.OrderByDescending(i => i);  // ❌ diagnostic
+var e = items.Order();                    // ❌ diagnostic
+var f = items.OrderDescending();          // ❌ diagnostic
+var g = items.Min();                      // ❌ diagnostic
+var h = items.Max();                      // ❌ diagnostic
 ```
 
 ### When it does not fire
@@ -34,8 +38,14 @@ var d = items.OrderDescending();          // ❌ diagnostic
 var numbers = new List<int>();            // int : IComparable
 var comparable = new List<SomeClass>();   // SomeClass : IComparable<SomeClass>
 
-var a = numbers.Max();                    // ✅
-var b = comparable.MinBy(i => i);         // ✅
+var a = comparable.MinBy(i => i);          // ✅
+var b = comparable.MaxBy(i => i);          // ✅
+var c = comparable.OrderBy(i => i);        // ✅
+var d = comparable.OrderByDescending(i => i); // ✅
+var e = numbers.Order();                   // ✅
+var f = numbers.OrderDescending();         // ✅
+var g = numbers.Min();                     // ✅
+var h = numbers.Max();                     // ✅
 ```
 
 - An overload with an explicit comparer (the calling code controls the ordering):
