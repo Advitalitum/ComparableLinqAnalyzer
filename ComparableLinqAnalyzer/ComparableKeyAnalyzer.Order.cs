@@ -6,7 +6,7 @@ public partial class ComparableKeyAnalyzer
 {
     private const string OrderMethodName = "Order";
 
-    public const string OrderDiagnosticId = "MBA0005";
+    public const string OrderDiagnosticId = "CLA0005";
 
     private static readonly DiagnosticDescriptor OrderRule = new(
         OrderDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,

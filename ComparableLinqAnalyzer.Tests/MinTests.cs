@@ -30,7 +30,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("MBA0007")
+        var expected = Verifier.Diagnostic("CLA0007")
             .WithSpan(10, 19, 10, 30)
             .WithArguments("NotComparable", "Min");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -58,7 +58,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("MBA0007")
+        var expected = Verifier.Diagnostic("CLA0007")
             .WithSpan(10, 19, 10, 36)
             .WithArguments("NotComparable", "Min");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -86,7 +86,7 @@ public struct NotComparableStruct
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("MBA0007")
+        var expected = Verifier.Diagnostic("CLA0007")
             .WithSpan(10, 19, 10, 30)
             .WithArguments("NotComparableStruct", "Min");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -114,7 +114,7 @@ public struct NotComparableStruct
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("MBA0007")
+        var expected = Verifier.Diagnostic("CLA0007")
             .WithSpan(10, 19, 10, 36)
             .WithArguments("NotComparableStruct", "Min");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);

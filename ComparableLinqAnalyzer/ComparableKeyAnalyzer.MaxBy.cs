@@ -6,7 +6,7 @@ public partial class ComparableKeyAnalyzer
 {
     private const string MaxByMethodName = "MaxBy";
 
-    public const string MaxByDiagnosticId = "MBA0002";
+    public const string MaxByDiagnosticId = "CLA0002";
 
     private static readonly DiagnosticDescriptor MaxByRule = new(
         MaxByDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,

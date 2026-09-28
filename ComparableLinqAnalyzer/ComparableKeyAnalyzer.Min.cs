@@ -6,7 +6,7 @@ public partial class ComparableKeyAnalyzer
 {
     private const string MinMethodName = "Min";
 
-    public const string MinDiagnosticId = "MBA0007";
+    public const string MinDiagnosticId = "CLA0007";
 
     private static readonly DiagnosticDescriptor MinRule = new(
         MinDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,

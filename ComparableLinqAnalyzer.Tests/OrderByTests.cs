@@ -30,7 +30,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("MBA0003")
+        var expected = Verifier.Diagnostic("CLA0003")
             .WithSpan(10, 23, 10, 44)
             .WithArguments("NotComparable", "OrderBy");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -84,7 +84,7 @@ public struct NotComparableStruct
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("MBA0003")
+        var expected = Verifier.Diagnostic("CLA0003")
             .WithSpan(10, 23, 10, 44)
             .WithArguments("NotComparableStruct", "OrderBy");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);

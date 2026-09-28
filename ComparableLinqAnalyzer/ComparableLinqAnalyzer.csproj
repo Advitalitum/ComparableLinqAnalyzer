@@ -13,7 +13,7 @@
         <AssemblyName>ComparableLinqAnalyzer</AssemblyName>
 
         <PackageId>ComparableLinqAnalyzer</PackageId>
-        <Version>1.0.5</Version>
+        <Version>1.0.6</Version>
         <Authors>ComparableLinqAnalyzer</Authors>
         <Description>Roslyn analyzer that reports MinBy, MaxBy, OrderBy, OrderByDescending, Order, OrderDescending, Min and Max calls whose comparable type does not implement IComparable or IComparable&lt;T&gt;.</Description>
 
