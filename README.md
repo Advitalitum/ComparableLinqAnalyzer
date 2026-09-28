@@ -81,7 +81,7 @@ dotnet add package ComparableLinqAnalyzer
 
 ```xml
 <ItemGroup>
-    <PackageReference Include="ComparableLinqAnalyzer" Version="0.0.1" />
+    <PackageReference Include="ComparableLinqAnalyzer" Version="0.0.2" />
 </ItemGroup>
 ```
 
