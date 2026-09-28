@@ -11,21 +11,27 @@ public class MinByUsage
 {
     public void Run()
     {
-        var words = new List<string> { "aa", "b", "ccc" };
-        var shortest = words.MinBy(w => w.Length);
+        // Class types
+        var notComparable = new List<NotComparable>();
+        var first = notComparable.MinBy(i => i); // diagnostic
 
-        var items = new List<NotComparable>();
-        var first = items.MinBy(i => i);
+        var implementingComparable = new List<ImplementsComparable>();
+        var second = implementingComparable.MinBy(i => i); // ok
 
-        var withComparer = items.MinBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value)));
+        var implementingGenericComparable = new List<ImplementsGenericComparable>();
+        var third = implementingGenericComparable.MinBy(i => i); // ok
 
-        var nonGeneric = new List<ImplementsComparable>();
-        var byNonGeneric = nonGeneric.MinBy(i => i);
+        // Struct types
+        var notComparableStruct = new List<NonComparableStruct>();
+        var fourth = notComparableStruct.MinBy(i => i); // diagnostic
 
-        var generic = new List<ImplementsGenericComparable>();
-        var byGeneric = generic.MinBy(i => i);
+        var implementingComparableStruct = new List<ImplementsComparableStruct>();
+        var fifth = implementingComparableStruct.MinBy(i => i); // ok
 
-        var wrappers = new List<ShiftWrapper>();
-        var byProperty = wrappers.GroupBy(w => w.ShiftStart.Value).Select(g => g.MinBy(x => x.ShiftStart));
+        var implementingGenericComparableStruct = new List<GenericComparableStruct>();
+        var sixth = implementingGenericComparableStruct.MinBy(i => i); // ok
+
+        // Overload with a comparer (not analyzed)
+        var withComparer = notComparable.MinBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok
     }
 }

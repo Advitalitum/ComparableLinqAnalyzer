@@ -11,12 +11,27 @@ public class MinUsage
 {
     public void Run()
     {
-        var numbers = new List<int> { 3, 1, 2 };
-        var min = numbers.Min();
-        var minByKey = numbers.Min(n => n);
+        // Class types
+        var notComparable = new List<NotComparable>();
+        var first = notComparable.Min(); // diagnostic
 
-        var items = new List<NotComparable>();
-        var minElement = items.Min();
-        var minBySelector = items.Min(i => i.Value);
+        var implementingComparable = new List<ImplementsComparable>();
+        var second = implementingComparable.Min(); // ok
+
+        var implementingGenericComparable = new List<ImplementsGenericComparable>();
+        var third = implementingGenericComparable.Min(); // ok
+
+        // Struct types
+        var notComparableStruct = new List<NonComparableStruct>();
+        var fourth = notComparableStruct.Min(); // diagnostic
+
+        var implementingComparableStruct = new List<ImplementsComparableStruct>();
+        var fifth = implementingComparableStruct.Min(); // ok
+
+        var implementingGenericComparableStruct = new List<GenericComparableStruct>();
+        var sixth = implementingGenericComparableStruct.Min(); // ok
+
+        // Overload with a selector (not analyzed)
+        var withSelector = notComparable.Min(i => i.Value); // ok
     }
 }

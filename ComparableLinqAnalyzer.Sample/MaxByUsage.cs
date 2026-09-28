@@ -11,12 +11,27 @@ public class MaxByUsage
 {
     public void Run()
     {
-        var words = new List<string> { "aa", "b", "ccc" };
-        var longest = words.MaxBy(w => w.Length);
+        // Class types
+        var notComparable = new List<NotComparable>();
+        var first = notComparable.MaxBy(i => i); // diagnostic
 
-        var items = new List<NotComparable>();
-        var first = items.MaxBy(i => i);
+        var implementingComparable = new List<ImplementsComparable>();
+        var second = implementingComparable.MaxBy(i => i); // ok
 
-        var withComparer = items.MaxBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value)));
+        var implementingGenericComparable = new List<ImplementsGenericComparable>();
+        var third = implementingGenericComparable.MaxBy(i => i); // ok
+
+        // Struct types
+        var notComparableStruct = new List<NonComparableStruct>();
+        var fourth = notComparableStruct.MaxBy(i => i); // diagnostic
+
+        var implementingComparableStruct = new List<ImplementsComparableStruct>();
+        var fifth = implementingComparableStruct.MaxBy(i => i); // ok
+
+        var implementingGenericComparableStruct = new List<GenericComparableStruct>();
+        var sixth = implementingGenericComparableStruct.MaxBy(i => i); // ok
+
+        // Overload with a comparer (not analyzed)
+        var withComparer = notComparable.MaxBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok
     }
 }

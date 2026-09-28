@@ -22,7 +22,7 @@
         <value>The type used in MinBy, MaxBy, OrderBy, OrderByDescending, Order, OrderDescending, Min or Max must implement IComparable or IComparable&lt;T&gt; so that the elements can be compared.</value><comment>An optional longer localizable description of the diagnostic.</comment>
     </data>
     <data name="AB0003MessageFormat" xml:space="preserve">
-        <value>The type '{0}' used in {1} must implement IComparable or IComparable&lt;{0}&gt;</value><comment>The format-able message the diagnostic displays.</comment>
+        <value>Type '{0}' used in {1} does not implement IComparable or IComparable&lt;T&gt;</value><comment>The format-able message the diagnostic displays.</comment>
     </data>
     <data name="AB0003Title" xml:space="preserve">
         <value>The comparable type used in MinBy, MaxBy, OrderBy, OrderByDescending, Order, OrderDescending, Min or Max is not comparable</value><comment>The title of the diagnostic.</comment>
