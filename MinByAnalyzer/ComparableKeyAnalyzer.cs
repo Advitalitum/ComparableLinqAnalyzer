@@ -1,18 +1,16 @@
+using System;
 using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Operations;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace MinByAnalyzer;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class ComparableKeyAnalyzer : DiagnosticAnalyzer
+public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
 {
-    private const string DiagnosticId = "MBA0001";
-
     private const string LinqNamespace = "System.Linq";
-    private const string MinByMethodName = "MinBy";
-    private const string MaxByMethodName = "MaxBy";
     private const string GenericComparableMetadataName = "System.IComparable`1";
     private const string NonGenericComparableMetadataName = "System.IComparable";
 
@@ -29,11 +27,16 @@ public class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
     private const string Category = "Usage";
 
-    private static readonly DiagnosticDescriptor Rule = new(DiagnosticId, Title, MessageFormat, Category,
-        DiagnosticSeverity.Error, isEnabledByDefault: true, description: Description);
-
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(Rule);
+        ImmutableArray.Create(
+            MinByRule,
+            MaxByRule,
+            OrderByRule,
+            OrderByDescendingRule,
+            OrderRule,
+            OrderDescendingRule,
+            MinRule,
+            MaxRule);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -49,42 +52,110 @@ public class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
         IMethodSymbol methodSymbol = invocationOperation.TargetMethod;
 
-        if (!IsLinqMinOrMaxBy(methodSymbol))
+        if (!TryGetComparableTarget(methodSymbol, out ITypeSymbol targetType, out DiagnosticDescriptor rule))
             return;
 
-        if (methodSymbol.TypeArguments.Length < 2)
+        if (targetType is ITypeParameterSymbol or IErrorTypeSymbol)
             return;
 
-        if (methodSymbol.Parameters.Length >= 3)
+        targetType = UnwrapNullable(targetType);
+
+        if (IsComparable(targetType, context.Compilation))
             return;
 
-        ITypeSymbol keyType = methodSymbol.TypeArguments[1];
-
-        if (keyType is ITypeParameterSymbol or IErrorTypeSymbol)
-            return;
-
-        keyType = UnwrapNullable(keyType);
-
-        if (IsComparable(keyType, context.Compilation))
-            return;
-
-        var diagnostic = Diagnostic.Create(Rule,
+        var diagnostic = Diagnostic.Create(rule,
             invocationOperation.Syntax.GetLocation(),
-            keyType.ToDisplayString(),
+            targetType.ToDisplayString(),
             methodSymbol.Name);
 
         context.ReportDiagnostic(diagnostic);
     }
 
-    private static bool IsLinqMinOrMaxBy(IMethodSymbol methodSymbol)
+    private static bool TryGetComparableTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType,
+        out DiagnosticDescriptor rule)
     {
-        if (methodSymbol.Name != MinByMethodName && methodSymbol.Name != MaxByMethodName)
+        targetType = null!;
+        rule = null!;
+
+        if (!IsLinqMethod(methodSymbol))
             return false;
 
+        return TryGetMinByTarget(methodSymbol, out targetType, out rule)
+            || TryGetMaxByTarget(methodSymbol, out targetType, out rule)
+            || TryGetOrderByTarget(methodSymbol, out targetType, out rule)
+            || TryGetOrderByDescendingTarget(methodSymbol, out targetType, out rule)
+            || TryGetOrderTarget(methodSymbol, out targetType, out rule)
+            || TryGetOrderDescendingTarget(methodSymbol, out targetType, out rule)
+            || TryGetMinTarget(methodSymbol, out targetType, out rule)
+            || TryGetMaxTarget(methodSymbol, out targetType, out rule);
+    }
+
+    private static bool IsLinqMethod(IMethodSymbol methodSymbol)
+    {
         if (methodSymbol.ContainingType?.ContainingNamespace is not INamespaceSymbol namespaceSymbol)
             return false;
 
         return namespaceSymbol.ToDisplayString() == LinqNamespace;
+    }
+
+    private static bool TryGetKeySelectorTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType)
+    {
+        targetType = null!;
+
+        if (methodSymbol.Parameters.Length >= 3)
+            return false;
+
+        if (methodSymbol.TypeArguments.Length < 2)
+            return false;
+
+        targetType = methodSymbol.TypeArguments[1];
+
+        return true;
+    }
+
+    private static bool TryGetElementTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType)
+    {
+        targetType = null!;
+
+        if (methodSymbol.Parameters.Length >= 2)
+            return false;
+
+        if (methodSymbol.TypeArguments.Length < 1)
+            return false;
+
+        targetType = methodSymbol.TypeArguments[0];
+
+        return true;
+    }
+
+    private static bool TryGetMinMaxTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType)
+    {
+        targetType = null!;
+
+        bool hasComparer = methodSymbol.Parameters.Any(IsComparerType);
+        if (hasComparer)
+            return false;
+
+        bool hasSelector = methodSymbol.Parameters.Any(IsFuncType);
+        int typeArgumentIndex = hasSelector ? 1 : 0;
+
+        if (methodSymbol.TypeArguments.Length <= typeArgumentIndex)
+            return false;
+
+        targetType = methodSymbol.TypeArguments[typeArgumentIndex];
+
+        return true;
+    }
+
+    private static bool IsFuncType(IParameterSymbol parameter)
+    {
+        return parameter.Type.TypeKind == TypeKind.Delegate
+            && parameter.Type.Name.StartsWith("Func`", StringComparison.Ordinal);
+    }
+
+    private static bool IsComparerType(IParameterSymbol parameter)
+    {
+        return parameter.Type.Name == "IComparer`1";
     }
 
     private static ITypeSymbol UnwrapNullable(ITypeSymbol typeSymbol)

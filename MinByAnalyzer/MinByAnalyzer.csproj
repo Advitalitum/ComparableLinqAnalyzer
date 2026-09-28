@@ -13,9 +13,9 @@
         <AssemblyName>MinByAnalyzer</AssemblyName>
 
         <PackageId>MinByAnalyzer</PackageId>
-        <Version>1.0.1</Version>
+        <Version>1.0.4</Version>
         <Authors>MinByAnalyzer</Authors>
-        <Description>Roslyn analyzer that reports MinBy calls whose key type does not implement IComparable or IComparable&lt;TKey&gt;.</Description>
+        <Description>Roslyn analyzer that reports MinBy, MaxBy, OrderBy, OrderByDescending, Order, OrderDescending, Min and Max calls whose comparable type does not implement IComparable or IComparable&lt;T&gt;.</Description>
 
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>

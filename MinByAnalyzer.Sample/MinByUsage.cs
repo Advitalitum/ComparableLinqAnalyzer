@@ -7,9 +7,9 @@ using System.Linq;
 
 namespace MinByAnalyzer.Sample;
 
-public class Examples
+public class MinByUsage
 {
-    public void MinByUsage()
+    public void Run()
     {
         var words = new List<string> { "aa", "b", "ccc" };
         var shortest = words.MinBy(w => w.Length);
@@ -24,30 +24,5 @@ public class Examples
 
         var generic = new List<ImplementsGenericComparable>();
         var byGeneric = generic.MinBy(i => i);
-    }
-
-    private class ImplementsComparable : IComparable
-    {
-        public int Value { get; set; }
-
-        public int CompareTo(object? obj)
-        {
-            return Value.CompareTo(((ImplementsComparable)obj!).Value);
-        }
-    }
-
-    private class ImplementsGenericComparable : IComparable<ImplementsGenericComparable>
-    {
-        public int Value { get; set; }
-
-        public int CompareTo(ImplementsGenericComparable? other)
-        {
-            return Value.CompareTo(other!.Value);
-        }
-    }
-
-    private class NotComparable
-    {
-        public int Value { get; set; }
     }
 }
