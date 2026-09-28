@@ -6,12 +6,13 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace MinByAnalyzer;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class MinByComparableAnalyzer : DiagnosticAnalyzer
+public class ComparableKeyAnalyzer : DiagnosticAnalyzer
 {
     private const string DiagnosticId = "MBA0001";
 
     private const string LinqNamespace = "System.Linq";
     private const string MinByMethodName = "MinBy";
+    private const string MaxByMethodName = "MaxBy";
     private const string GenericComparableMetadataName = "System.IComparable`1";
     private const string NonGenericComparableMetadataName = "System.IComparable";
 
@@ -48,7 +49,7 @@ public class MinByComparableAnalyzer : DiagnosticAnalyzer
 
         IMethodSymbol methodSymbol = invocationOperation.TargetMethod;
 
-        if (!IsLinqMinBy(methodSymbol))
+        if (!IsLinqMinOrMaxBy(methodSymbol))
             return;
 
         if (methodSymbol.TypeArguments.Length < 2)
@@ -69,14 +70,15 @@ public class MinByComparableAnalyzer : DiagnosticAnalyzer
 
         var diagnostic = Diagnostic.Create(Rule,
             invocationOperation.Syntax.GetLocation(),
-            keyType.ToDisplayString());
+            keyType.ToDisplayString(),
+            methodSymbol.Name);
 
         context.ReportDiagnostic(diagnostic);
     }
 
-    private static bool IsLinqMinBy(IMethodSymbol methodSymbol)
+    private static bool IsLinqMinOrMaxBy(IMethodSymbol methodSymbol)
     {
-        if (methodSymbol.Name != MinByMethodName)
+        if (methodSymbol.Name != MinByMethodName && methodSymbol.Name != MaxByMethodName)
             return false;
 
         if (methodSymbol.ContainingType?.ContainingNamespace is not INamespaceSymbol namespaceSymbol)

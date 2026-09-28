@@ -22,7 +22,7 @@
         <value>The TKey type of the MinBy method must implement IComparable or IComparable&lt;TKey&gt; so that the elements can be compared.</value><comment>An optional longer localizable description of the diagnostic.</comment>
     </data>
     <data name="AB0003MessageFormat" xml:space="preserve">
-        <value>The TKey type '{0}' used in MinBy must implement IComparable or IComparable&lt;{0}&gt;</value><comment>The format-able message the diagnostic displays.</comment>
+        <value>The TKey type '{0}' used in {1} must implement IComparable or IComparable&lt;{0}&gt;</value><comment>The format-able message the diagnostic displays.</comment>
     </data>
     <data name="AB0003Title" xml:space="preserve">
         <value>The MinBy key type is not comparable</value><comment>The title of the diagnostic.</comment>
