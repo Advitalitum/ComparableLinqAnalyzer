@@ -12,7 +12,7 @@ public partial class ComparableKeyAnalyzer
         OrderByDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
         isEnabledByDefault: true, description: Description);
 
-    private static bool TryGetOrderByTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType,
+    private static bool TryGetOrderByTarget(IMethodSymbol methodSymbol, bool nullComparer, out ITypeSymbol targetType,
         out DiagnosticDescriptor rule)
     {
         rule = OrderByRule;
@@ -21,6 +21,6 @@ public partial class ComparableKeyAnalyzer
         if (methodSymbol.Name != OrderByMethodName)
             return false;
 
-        return TryGetKeySelectorTarget(methodSymbol: methodSymbol, out targetType);
+        return TryGetKeySelectorTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType);
     }
 }

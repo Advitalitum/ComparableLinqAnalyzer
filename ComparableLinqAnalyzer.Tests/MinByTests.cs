@@ -259,6 +259,54 @@ public class NotComparable
     }
 
     [Fact]
+    public async Task MinByWithNullComparerAndNonComparableKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var first = items.MinBy(i => i, null);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0001")
+            .WithSpan(10, 21, 10, 46)
+            .WithArguments("NotComparable", "MinBy");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task MinByWithNullComparerAndComparableKey_NoDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<int>();
+        var first = items.MinBy(i => i, null);
+    }
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
     public async Task MinByWithNonComparablePropertyViaGroupBySelect_AlertDiagnostic()
     {
         const string text = @"

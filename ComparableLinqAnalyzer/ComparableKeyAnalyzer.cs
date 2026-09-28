@@ -55,7 +55,12 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         ITypeSymbol targetType;
         DiagnosticDescriptor rule;
 
-        if (!TryGetComparableTarget(methodSymbol: methodSymbol, out targetType, out rule))
+        // Comparer overload. If the comparer is a literal null, LINQ falls back to
+        // Comparer<T>.Default at runtime, so the type must still be comparable - such a
+        // call is analyzed as the plain overload.
+        bool nullComparer = HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
+
+        if (!TryGetComparableTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule))
             return;
 
         if (targetType is ITypeParameterSymbol or IErrorTypeSymbol)
@@ -74,8 +79,8 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(diagnostic);
     }
 
-    private static bool TryGetComparableTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType,
-        out DiagnosticDescriptor rule)
+    private static bool TryGetComparableTarget(IMethodSymbol methodSymbol, bool nullComparer,
+        out ITypeSymbol targetType, out DiagnosticDescriptor rule)
     {
         targetType = null!;
         rule = null!;
@@ -83,14 +88,30 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         if (!IsLinqMethod(methodSymbol))
             return false;
 
-        return TryGetMinByTarget(methodSymbol: methodSymbol, out targetType, out rule)
-            || TryGetMaxByTarget(methodSymbol: methodSymbol, out targetType, out rule)
-            || TryGetOrderByTarget(methodSymbol: methodSymbol, out targetType, out rule)
-            || TryGetOrderByDescendingTarget(methodSymbol: methodSymbol, out targetType, out rule)
-            || TryGetOrderTarget(methodSymbol: methodSymbol, out targetType, out rule)
-            || TryGetOrderDescendingTarget(methodSymbol: methodSymbol, out targetType, out rule)
+        return TryGetMinByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
+            || TryGetMaxByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
+            || TryGetOrderByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
+            || TryGetOrderByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
+            || TryGetOrderTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
+            || TryGetOrderDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
             || TryGetMinTarget(methodSymbol: methodSymbol, out targetType, out rule)
             || TryGetMaxTarget(methodSymbol: methodSymbol, out targetType, out rule);
+    }
+
+    // Determines whether the comparer overload was passed a literal null (or default).
+    private static bool HasNullComparerArgument(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
+    {
+        for (int i = 0; i < methodSymbol.Parameters.Length; i++)
+        {
+            if (!IsComparerType(methodSymbol.Parameters[i]))
+                continue;
+
+            IOperation? argumentValue = invocationOperation.Arguments[i].Value;
+
+            return argumentValue.ConstantValue.HasValue && argumentValue.ConstantValue.Value is null;
+        }
+
+        return false;
     }
 
     private static bool IsLinqMethod(IMethodSymbol methodSymbol)
@@ -104,11 +125,16 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         return namespaceSymbol.ToDisplayString() == LinqNamespace;
     }
 
-    private static bool TryGetKeySelectorTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType)
+    private static bool TryGetKeySelectorTarget(IMethodSymbol methodSymbol, bool nullComparer,
+        out ITypeSymbol targetType)
     {
         targetType = null!;
 
-        if (methodSymbol.Parameters.Length >= 3)
+        // The comparer overload has three parameters. With a real comparer comparison is
+        // controlled by the caller, so the key does not need to be comparable. But when
+        // the comparer is a literal null, Comparer<T>.Default is used at runtime and the
+        // key must still be comparable.
+        if (methodSymbol.Parameters.Length >= 3 && !nullComparer)
             return false;
 
         if (methodSymbol.TypeArguments.Length < 2)
@@ -119,11 +145,13 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         return true;
     }
 
-    private static bool TryGetElementTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType)
+    private static bool TryGetElementTarget(IMethodSymbol methodSymbol, bool nullComparer, out ITypeSymbol targetType)
     {
         targetType = null!;
 
-        if (methodSymbol.Parameters.Length >= 2)
+        // The Order/OrderDescending comparer overload has two parameters. As with the key
+        // above, analyze it only when the comparer is a literal null.
+        if (methodSymbol.Parameters.Length >= 2 && !nullComparer)
             return false;
 
         if (methodSymbol.TypeArguments.Length < 1)

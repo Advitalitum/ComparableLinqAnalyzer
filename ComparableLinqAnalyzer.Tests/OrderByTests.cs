@@ -63,6 +63,34 @@ public class NotComparable
     }
 
     [Fact]
+    public async Task OrderByWithNullComparerAndNonComparableKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var ordered = items.OrderBy(i => i, null);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0003")
+            .WithSpan(10, 23, 10, 50)
+            .WithArguments("NotComparable", "OrderBy");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
+
+    [Fact]
     public async Task OrderByWithNonComparableStruct_AlertDiagnostic()
     {
         const string text = @"
@@ -142,6 +170,34 @@ public class NotComparable
 " + TestSources.Linq;
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByDescendingWithNullComparerAndNonComparableKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var ordered = items.OrderByDescending(i => i, null);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0004")
+            .WithSpan(10, 23, 10, 60)
+            .WithArguments("NotComparable", "OrderByDescending");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
     }
 
     [Fact]

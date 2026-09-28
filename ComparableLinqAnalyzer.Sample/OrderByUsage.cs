@@ -45,8 +45,10 @@ public class OrderByUsage
 
         var sixthDesc = implementingGenericComparableStruct.OrderByDescending(i => i); // ok
 
-        // Overloads with a comparer (not analyzed)
-        var withComparer = notComparable.OrderBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok
-        var withComparerDesc = notComparable.OrderByDescending(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok
+        // Overloads with a comparer
+        var withComparer = notComparable.OrderBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok - real comparer
+        var withComparerDesc = notComparable.OrderByDescending(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok - real comparer
+        var withNullComparer = notComparable.OrderBy(i => i, null); // diagnostic - falls back to Comparer<T>.Default
+        var withNullComparerDesc = notComparable.OrderByDescending(i => i, null); // diagnostic - falls back to Comparer<T>.Default
     }
 }

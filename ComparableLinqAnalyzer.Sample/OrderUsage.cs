@@ -45,8 +45,10 @@ public class OrderUsage
 
         var sixthDesc = implementingGenericComparableStruct.OrderDescending(); // ok
 
-        // Overloads with a comparer (not analyzed)
-        var withComparer = notComparable.Order(Comparer<NotComparable>.Default); // ok
-        var withComparerDesc = notComparable.OrderDescending(Comparer<NotComparable>.Default); // ok
+        // Overloads with a comparer
+        var withComparer = notComparable.Order(Comparer<NotComparable>.Default); // ok - real comparer
+        var withComparerDesc = notComparable.OrderDescending(Comparer<NotComparable>.Default); // ok - real comparer
+        var withNullComparer = notComparable.Order(null); // diagnostic - falls back to Comparer<T>.Default
+        var withNullComparerDesc = notComparable.OrderDescending(null); // diagnostic - falls back to Comparer<T>.Default
     }
 }

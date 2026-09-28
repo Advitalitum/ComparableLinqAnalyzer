@@ -120,6 +120,54 @@ public class NotComparable
     }
 
     [Fact]
+    public async Task MaxByWithNullComparerAndNonComparableKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var first = items.MaxBy(i => i, null);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0002")
+            .WithSpan(10, 21, 10, 46)
+            .WithArguments("NotComparable", "MaxBy");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task MaxByWithNullComparerAndComparableKey_NoDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<int>();
+        var first = items.MaxBy(i => i, null);
+    }
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
     public async Task MaxByWithGenericComparableClass_NoDiagnostic()
     {
         const string text = @"

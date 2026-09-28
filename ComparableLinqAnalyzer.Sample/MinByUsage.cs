@@ -31,7 +31,8 @@ public class MinByUsage
         var implementingGenericComparableStruct = new List<GenericComparableStruct>();
         var sixth = implementingGenericComparableStruct.MinBy(i => i); // ok
 
-        // Overload with a comparer (not analyzed)
-        var withComparer = notComparable.MinBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok
+        // Overload with a comparer
+        var withComparer = notComparable.MinBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok - real comparer
+        var withNullComparer = notComparable.MinBy(i => i, null); // diagnostic - falls back to Comparer<T>.Default
     }
 }

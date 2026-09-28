@@ -10,13 +10,13 @@ namespace System.Linq
         public static TSource MinBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector)
             => System.Linq.Enumerable.First(source);
 
-        public static TSource MinBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Collections.Generic.IComparer<TKey> comparer)
+        public static TSource MinBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Collections.Generic.IComparer<TKey>? comparer)
             => System.Linq.Enumerable.First(source);
 
         public static TSource MaxBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector)
             => System.Linq.Enumerable.First(source);
 
-        public static TSource MaxBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Collections.Generic.IComparer<TKey> comparer)
+        public static TSource MaxBy<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Collections.Generic.IComparer<TKey>? comparer)
             => System.Linq.Enumerable.First(source);
 
         public static System.Linq.IOrderedEnumerable<TSource> Order<TSource>(this System.Collections.Generic.IEnumerable<TSource> source)

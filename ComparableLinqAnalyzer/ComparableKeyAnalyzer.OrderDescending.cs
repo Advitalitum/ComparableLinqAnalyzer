@@ -12,8 +12,8 @@ public partial class ComparableKeyAnalyzer
         OrderDescendingDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
         isEnabledByDefault: true, description: Description);
 
-    private static bool TryGetOrderDescendingTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType,
-        out DiagnosticDescriptor rule)
+    private static bool TryGetOrderDescendingTarget(IMethodSymbol methodSymbol, bool nullComparer,
+        out ITypeSymbol targetType, out DiagnosticDescriptor rule)
     {
         rule = OrderDescendingRule;
         targetType = null!;
@@ -21,6 +21,6 @@ public partial class ComparableKeyAnalyzer
         if (methodSymbol.Name != OrderDescendingMethodName)
             return false;
 
-        return TryGetElementTarget(methodSymbol: methodSymbol, out targetType);
+        return TryGetElementTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType);
     }
 }

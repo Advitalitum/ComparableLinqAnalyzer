@@ -31,7 +31,8 @@ public class MaxByUsage
         var implementingGenericComparableStruct = new List<GenericComparableStruct>();
         var sixth = implementingGenericComparableStruct.MaxBy(i => i); // ok
 
-        // Overload with a comparer (not analyzed)
-        var withComparer = notComparable.MaxBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok
+        // Overload with a comparer
+        var withComparer = notComparable.MaxBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value))); // ok - real comparer
+        var withNullComparer = notComparable.MaxBy(i => i, null); // diagnostic - falls back to Comparer<T>.Default
     }
 }
