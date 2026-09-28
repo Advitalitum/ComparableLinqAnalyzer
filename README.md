@@ -3,16 +3,16 @@
 A set of three projects that includes Roslyn analyzers.
 
 ## Content
-### MinByAnalyzer
-A .NET Standard project with the implementation of the MinBy analyzer.
+### ComparableLinqAnalyzer
+A .NET Standard project with the implementation of the comparable-key analyzer.
 **You must build this project to see the results (errors) in the IDE.**
 
-- [ComparableKeyAnalyzer.cs](MinByAnalyzer/ComparableKeyAnalyzer.cs): An analyzer that reports `MinBy`, `MaxBy`, `OrderBy`, `OrderByDescending`, `Order`, `OrderDescending`, `Min` or `Max` calls whose comparable type does not implement `IComparable` or `IComparable<T>`.
+- [ComparableKeyAnalyzer.cs](ComparableLinqAnalyzer/ComparableKeyAnalyzer.cs): An analyzer that reports `MinBy`, `MaxBy`, `OrderBy`, `OrderByDescending`, `Order`, `OrderDescending`, `Min` or `Max` calls whose comparable type does not implement `IComparable` or `IComparable<T>`.
 
-### MinByAnalyzer.Sample
-A project that references the analyzer. Note the parameters of `ProjectReference` in [MinByAnalyzer.Sample.csproj](../MinByAnalyzer.Sample/MinByAnalyzer.Sample.csproj), they make sure that the project is referenced as a set of analyzers. 
+### ComparableLinqAnalyzer.Sample
+A project that references the analyzer. Note the parameters of `ProjectReference` in [ComparableLinqAnalyzer.Sample.csproj](../ComparableLinqAnalyzer.Sample/ComparableLinqAnalyzer.Sample.csproj), they make sure that the project is referenced as a set of analyzers.
 
-### MinByAnalyzer.Tests
+### ComparableLinqAnalyzer.Tests
 Unit tests for the analyzer. The easiest way to develop language-related features is to start with unit tests.
 
 ## How To?
