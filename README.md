@@ -51,6 +51,30 @@ var c = items.Order(comparer);            // ✅
 
 > Comparability is analyzed on the source type — `UnwrapNullable` unwraps `Nullable<T>` down to the underlying type.
 
+## Installation
+
+The analyzer is available on NuGet: [ComparableLinqAnalyzer](https://www.nuget.org/packages/ComparableLinqAnalyzer).
+
+### NuGet Package Manager
+
+```powershell
+Install-Package ComparableLinqAnalyzer
+```
+
+### .NET CLI
+
+```bash
+dotnet add package ComparableLinqAnalyzer
+```
+
+### PackageReference (project file)
+
+```xml
+<ItemGroup>
+    <PackageReference Include="ComparableLinqAnalyzer" Version="0.0.1" />
+</ItemGroup>
+```
+
 ## Rules
 
 | Rule ID  | Method            | Severity |
