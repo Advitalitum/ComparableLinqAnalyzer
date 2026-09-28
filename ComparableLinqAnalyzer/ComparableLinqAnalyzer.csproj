@@ -13,8 +13,9 @@
         <AssemblyName>ComparableLinqAnalyzer</AssemblyName>
 
         <PackageId>ComparableLinqAnalyzer</PackageId>
-        <Version>1.0.7</Version>
+        <Version>1.0.8</Version>
         <Authors>ComparableLinqAnalyzer</Authors>
+        <PackageLicenseExpression>WTFPL</PackageLicenseExpression>
         <Description>Roslyn analyzer that reports MinBy, MaxBy, OrderBy, OrderByDescending, Order, OrderDescending, Min and Max calls whose comparable type does not implement IComparable or IComparable&lt;T&gt;.</Description>
 
         <IncludeBuildOutput>false</IncludeBuildOutput>
