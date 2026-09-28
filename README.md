@@ -7,11 +7,11 @@ A set of projects that contain a Roslyn analyzer validating the use of LINQ meth
 The `ComparableKeyAnalyzer` inspects calls to the following LINQ methods:
 
 - `MinBy`, `MaxBy`
-- `OrderBy`, `OrderByDescending`
+- `OrderBy`, `OrderByDescending`, `ThenBy`, `ThenByDescending`
 - `Order`, `OrderDescending`
 - `Min`, `Max`
 
-For each call, the analyzer determines the type used for comparison (the selector key for `MinBy`/`MaxBy`/`OrderBy`/`OrderByDescending`, or the sequence element for `Order`/`OrderDescending`/`Min`/`Max`) and checks whether that type implements `IComparable` or `IComparable<T>`.
+For each call, the analyzer determines the type used for comparison (the selector key for `MinBy`/`MaxBy`/`OrderBy`/`OrderByDescending`/`ThenBy`/`ThenByDescending`, or the sequence element for `Order`/`OrderDescending`/`Min`/`Max`) and checks whether that type implements `IComparable` or `IComparable<T>`.
 
 If the type is **not** comparable, the analyzer reports an error.
 
@@ -20,14 +20,16 @@ If the type is **not** comparable, the analyzer reports an error.
 ```csharp
 var items = new List<NotComparable>();   // NotComparable does not implement IComparable
 
-var a = items.MinBy(i => i);              // ❌ diagnostic
-var b = items.MaxBy(i => i);              // ❌ diagnostic
-var c = items.OrderBy(i => i);            // ❌ diagnostic
-var d = items.OrderByDescending(i => i);  // ❌ diagnostic
-var e = items.Order();                    // ❌ diagnostic
-var f = items.OrderDescending();          // ❌ diagnostic
-var g = items.Min();                      // ❌ diagnostic
-var h = items.Max();                      // ❌ diagnostic
+var a = items.MinBy(i => i);                            // ❌ diagnostic
+var b = items.MaxBy(i => i);                            // ❌ diagnostic
+var c = items.OrderBy(i => i);                          // ❌ diagnostic
+var d = items.OrderByDescending(i => i);                // ❌ diagnostic
+var c2 = items.OrderBy(i => i).ThenBy(i => i);          // ❌ diagnostic
+var d2 = items.OrderBy(i => i).ThenByDescending(i => i);// ❌ diagnostic
+var e = items.Order();                                  // ❌ diagnostic
+var f = items.OrderDescending();                        // ❌ diagnostic
+var g = items.Min();                                    // ❌ diagnostic
+var h = items.Max();                                    // ❌ diagnostic
 ```
 
 ### When it does not fire
@@ -38,14 +40,16 @@ var h = items.Max();                      // ❌ diagnostic
 var numbers = new List<int>();            // int : IComparable
 var comparable = new List<SomeClass>();   // SomeClass : IComparable<SomeClass>
 
-var a = comparable.MinBy(i => i);             // ✅
-var b = comparable.MaxBy(i => i);             // ✅
-var c = comparable.OrderBy(i => i);           // ✅
-var d = comparable.OrderByDescending(i => i); // ✅
-var e = numbers.Order();                      // ✅
-var f = numbers.OrderDescending();            // ✅
-var g = numbers.Min();                        // ✅
-var h = numbers.Max();                        // ✅
+var a = comparable.MinBy(i => i);                            // ✅
+var b = comparable.MaxBy(i => i);                            // ✅
+var c = comparable.OrderBy(i => i);                          // ✅
+var d = comparable.OrderByDescending(i => i);                // ✅
+var c2 = comparable.OrderBy(i => i).ThenBy(i => i);          // ✅
+var d2 = comparable.OrderBy(i => i).ThenByDescending(i => i);// ✅
+var e = numbers.Order();                                     // ✅
+var f = numbers.OrderDescending();                           // ✅
+var g = numbers.Min();                                       // ✅
+var h = numbers.Max();                                       // ✅
 ```
 
 - An overload with an explicit comparer (the calling code controls the ordering):
@@ -81,7 +85,7 @@ dotnet add package ComparableLinqAnalyzer
 
 ```xml
 <ItemGroup>
-    <PackageReference Include="ComparableLinqAnalyzer" Version="0.0.2" />
+    <PackageReference Include="ComparableLinqAnalyzer" Version="0.0.3" />
 </ItemGroup>
 ```
 
@@ -97,6 +101,8 @@ dotnet add package ComparableLinqAnalyzer
 | CLA0006  | `OrderDescending` | Error    |
 | CLA0007  | `Min`             | Error    |
 | CLA0008  | `Max`             | Error    |
+| CLA0009  | `ThenBy`          | Error    |
+| CLA0010  | `ThenByDescending` | Error   |
 
 ## Content
 

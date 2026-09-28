@@ -10,3 +10,5 @@ CLA0005 | Usage    | Error    | Order: The comparable type must implement ICompa
 CLA0006 | Usage    | Error    | OrderDescending: The comparable type must implement IComparable or IComparable\<T\>.
 CLA0007 | Usage    | Error    | Min: The comparable type must implement IComparable or IComparable\<T\>.
 CLA0008 | Usage    | Error    | Max: The comparable type must implement IComparable or IComparable\<T\>.
+CLA0009 | Usage    | Error    | ThenBy: The comparable type must implement IComparable or IComparable\<T\>.
+CLA0010 | Usage    | Error    | ThenByDescending: The comparable type must implement IComparable or IComparable\<T\>.

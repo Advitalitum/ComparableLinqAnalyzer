@@ -36,7 +36,9 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
             OrderRule,
             OrderDescendingRule,
             MinRule,
-            MaxRule);
+            MaxRule,
+            ThenByRule,
+            ThenByDescendingRule);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -94,6 +96,8 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
             || TryGetOrderByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
             || TryGetOrderTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
             || TryGetOrderDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
+            || TryGetThenByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
+            || TryGetThenByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
             || TryGetMinTarget(methodSymbol: methodSymbol, out targetType, out rule)
             || TryGetMaxTarget(methodSymbol: methodSymbol, out targetType, out rule);
     }
