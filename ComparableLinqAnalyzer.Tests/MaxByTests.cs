@@ -118,4 +118,32 @@ public class NotComparable
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
+
+    [Fact]
+    public async Task MaxByWithGenericComparableClass_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsGenericComparable> { new ImplementsGenericComparable() };
+        var first = items.MaxBy(i => i);
+    }
+}
+
+public class ImplementsGenericComparable : IComparable<ImplementsGenericComparable>
+{
+    public int Value { get; set; }
+
+    public int CompareTo(ImplementsGenericComparable other) => Value.CompareTo(other.Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
 }
