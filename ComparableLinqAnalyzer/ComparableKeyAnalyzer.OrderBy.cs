@@ -21,6 +21,6 @@ public partial class ComparableKeyAnalyzer
         if (methodSymbol.Name != OrderByMethodName)
             return false;
 
-        return TryGetKeySelectorTarget(methodSymbol, out targetType);
+        return TryGetKeySelectorTarget(methodSymbol: methodSymbol, out targetType);
     }
 }

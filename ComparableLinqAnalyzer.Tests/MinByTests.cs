@@ -146,6 +146,41 @@ public class Comparable : IComparable
     }
 
     [Fact]
+    public async Task MinByWithComparableOfDifferentType_AlertDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<Item> { new Item() };
+        var first = items.MinBy(i => i);
+    }
+}
+
+public class Item : IComparable<Other>
+{
+    public int Value { get; set; }
+
+    public int CompareTo(Other other) => 0;
+}
+
+public class Other
+{
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("MBA0001")
+            .WithSpan(11, 21, 11, 40)
+            .WithArguments("Item", "MinBy");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
+
+    [Fact]
     public async Task MinByWithNullableValueTypeKey_NoDiagnostic()
     {
         const string text = @"

@@ -52,7 +52,10 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
         IMethodSymbol methodSymbol = invocationOperation.TargetMethod;
 
-        if (!TryGetComparableTarget(methodSymbol, out ITypeSymbol targetType, out DiagnosticDescriptor rule))
+        ITypeSymbol targetType;
+        DiagnosticDescriptor rule;
+
+        if (!TryGetComparableTarget(methodSymbol: methodSymbol, out targetType, out rule))
             return;
 
         if (targetType is ITypeParameterSymbol or IErrorTypeSymbol)
@@ -60,7 +63,7 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
         targetType = UnwrapNullable(targetType);
 
-        if (IsComparable(targetType, context.Compilation))
+        if (IsComparable(type: targetType, compilation: context.Compilation))
             return;
 
         var diagnostic = Diagnostic.Create(rule,
@@ -80,18 +83,21 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         if (!IsLinqMethod(methodSymbol))
             return false;
 
-        return TryGetMinByTarget(methodSymbol, out targetType, out rule)
-            || TryGetMaxByTarget(methodSymbol, out targetType, out rule)
-            || TryGetOrderByTarget(methodSymbol, out targetType, out rule)
-            || TryGetOrderByDescendingTarget(methodSymbol, out targetType, out rule)
-            || TryGetOrderTarget(methodSymbol, out targetType, out rule)
-            || TryGetOrderDescendingTarget(methodSymbol, out targetType, out rule)
-            || TryGetMinTarget(methodSymbol, out targetType, out rule)
-            || TryGetMaxTarget(methodSymbol, out targetType, out rule);
+        return TryGetMinByTarget(methodSymbol: methodSymbol, out targetType, out rule)
+            || TryGetMaxByTarget(methodSymbol: methodSymbol, out targetType, out rule)
+            || TryGetOrderByTarget(methodSymbol: methodSymbol, out targetType, out rule)
+            || TryGetOrderByDescendingTarget(methodSymbol: methodSymbol, out targetType, out rule)
+            || TryGetOrderTarget(methodSymbol: methodSymbol, out targetType, out rule)
+            || TryGetOrderDescendingTarget(methodSymbol: methodSymbol, out targetType, out rule)
+            || TryGetMinTarget(methodSymbol: methodSymbol, out targetType, out rule)
+            || TryGetMaxTarget(methodSymbol: methodSymbol, out targetType, out rule);
     }
 
     private static bool IsLinqMethod(IMethodSymbol methodSymbol)
     {
+        if (!methodSymbol.IsExtensionMethod)
+            return false;
+
         if (methodSymbol.ContainingType?.ContainingNamespace is not INamespaceSymbol namespaceSymbol)
             return false;
 

@@ -21,6 +21,6 @@ public partial class ComparableKeyAnalyzer
         if (methodSymbol.Name != MinMethodName)
             return false;
 
-        return TryGetMinMaxTarget(methodSymbol, out targetType);
+        return TryGetMinMaxTarget(methodSymbol: methodSymbol, out targetType);
     }
 }

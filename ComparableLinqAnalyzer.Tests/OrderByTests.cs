@@ -37,6 +37,32 @@ public class NotComparable
     }
 
     [Fact]
+    public async Task OrderByWithComparerAndNonComparableKey_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var ordered = items.OrderBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value)));
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
     public async Task OrderByWithNonComparableStruct_AlertDiagnostic()
     {
         const string text = @"
@@ -86,6 +112,32 @@ public struct ComparableStruct : IComparable<ComparableStruct>
     public int Value { get; set; }
 
     public int CompareTo(ComparableStruct other) => Value.CompareTo(other.Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByDescendingWithComparerAndNonComparableKey_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var ordered = items.OrderByDescending(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value)));
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
 }
 " + TestSources.Linq;
 
