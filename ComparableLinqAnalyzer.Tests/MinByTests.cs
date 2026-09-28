@@ -290,4 +290,32 @@ public class NotComparable
             .WithArguments("NotComparable", "MinBy");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
     }
+
+    [Fact]
+    public async Task MinByWithNonGenericComparableStruct_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsComparableStruct> { new ImplementsComparableStruct() };
+        var first = items.MinBy(i => i);
+    }
+}
+
+public struct ImplementsComparableStruct : IComparable
+{
+    public int Value { get; set; }
+
+    public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparableStruct)obj).Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
 }

@@ -172,4 +172,200 @@ public class ImplementsGenericComparable : IComparable<ImplementsGenericComparab
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
+
+    [Fact]
+    public async Task OrderByWithNonGenericComparableClass_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsComparable> { new ImplementsComparable() };
+        var ordered = items.OrderBy(i => i);
+    }
+}
+
+public class ImplementsComparable : IComparable
+{
+    public int Value { get; set; }
+
+    public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparable)obj).Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByWithGenericComparableStruct_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ComparableStruct> { new ComparableStruct() };
+        var ordered = items.OrderBy(i => i);
+    }
+}
+
+public struct ComparableStruct : IComparable<ComparableStruct>
+{
+    public int Value { get; set; }
+
+    public int CompareTo(ComparableStruct other) => Value.CompareTo(other.Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByWithNonGenericComparableStruct_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsComparableStruct> { new ImplementsComparableStruct() };
+        var ordered = items.OrderBy(i => i);
+    }
+}
+
+public struct ImplementsComparableStruct : IComparable
+{
+    public int Value { get; set; }
+
+    public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparableStruct)obj).Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByDescendingWithNonGenericComparableClass_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsComparable> { new ImplementsComparable() };
+        var ordered = items.OrderByDescending(i => i);
+    }
+}
+
+public class ImplementsComparable : IComparable
+{
+    public int Value { get; set; }
+
+    public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparable)obj).Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByDescendingWithNonGenericComparableStruct_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsComparableStruct> { new ImplementsComparableStruct() };
+        var ordered = items.OrderByDescending(i => i);
+    }
+}
+
+public struct ImplementsComparableStruct : IComparable
+{
+    public int Value { get; set; }
+
+    public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparableStruct)obj).Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByDescendingWithNonComparableClassKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var ordered = items.OrderByDescending(i => i);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0004")
+            .WithSpan(10, 23, 10, 54)
+            .WithArguments("NotComparable", "OrderByDescending");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderByDescendingWithNonComparableStructKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparableStruct>();
+        var ordered = items.OrderByDescending(i => i);
+    }
+}
+
+public struct NotComparableStruct
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0004")
+            .WithSpan(10, 23, 10, 54)
+            .WithArguments("NotComparableStruct", "OrderByDescending");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
 }

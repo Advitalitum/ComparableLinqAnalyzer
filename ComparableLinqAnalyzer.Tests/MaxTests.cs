@@ -141,4 +141,88 @@ public class NotComparable
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
+
+    [Fact]
+    public async Task MaxWithNonGenericComparableClass_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsComparable> { new ImplementsComparable() };
+        var max = items.Max();
+    }
+}
+
+public class ImplementsComparable : IComparable
+{
+    public int Value { get; set; }
+
+    public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparable)obj).Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task MaxWithGenericComparableClass_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsGenericComparable> { new ImplementsGenericComparable() };
+        var max = items.Max();
+    }
+}
+
+public class ImplementsGenericComparable : IComparable<ImplementsGenericComparable>
+{
+    public int Value { get; set; }
+
+    public int CompareTo(ImplementsGenericComparable other) => Value.CompareTo(other.Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task MaxWithNonGenericComparableStruct_NoDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<ImplementsComparableStruct> { new ImplementsComparableStruct() };
+        var max = items.Max();
+    }
+}
+
+public struct ImplementsComparableStruct : IComparable
+{
+    public int Value { get; set; }
+
+    public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparableStruct)obj).Value);
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
 }
