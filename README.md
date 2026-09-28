@@ -38,14 +38,14 @@ var h = items.Max();                      // ❌ diagnostic
 var numbers = new List<int>();            // int : IComparable
 var comparable = new List<SomeClass>();   // SomeClass : IComparable<SomeClass>
 
-var a = comparable.MinBy(i => i);          // ✅
-var b = comparable.MaxBy(i => i);          // ✅
-var c = comparable.OrderBy(i => i);        // ✅
+var a = comparable.MinBy(i => i);             // ✅
+var b = comparable.MaxBy(i => i);             // ✅
+var c = comparable.OrderBy(i => i);           // ✅
 var d = comparable.OrderByDescending(i => i); // ✅
-var e = numbers.Order();                   // ✅
-var f = numbers.OrderDescending();         // ✅
-var g = numbers.Min();                     // ✅
-var h = numbers.Max();                     // ✅
+var e = numbers.Order();                      // ✅
+var f = numbers.OrderDescending();            // ✅
+var g = numbers.Min();                        // ✅
+var h = numbers.Max();                        // ✅
 ```
 
 - An overload with an explicit comparer (the calling code controls the ordering):
