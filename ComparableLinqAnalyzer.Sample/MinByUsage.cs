@@ -24,5 +24,8 @@ public class MinByUsage
 
         var generic = new List<ImplementsGenericComparable>();
         var byGeneric = generic.MinBy(i => i);
+
+        var wrappers = new List<ShiftWrapper>();
+        var byProperty = wrappers.GroupBy(w => w.ShiftStart.Value).Select(g => g.MinBy(x => x.ShiftStart));
     }
 }

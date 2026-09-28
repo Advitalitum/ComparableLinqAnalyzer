@@ -15,5 +15,6 @@ public class MaxUsage
 
         var items = new List<NotComparable>();
         var maxElement = items.Max();
+        var maxBySelector = items.Max(i => i.Value);
     }
 }

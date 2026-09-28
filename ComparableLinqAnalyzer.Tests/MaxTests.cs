@@ -93,7 +93,7 @@ public struct ComparableStruct : IComparable<ComparableStruct>
     }
 
     [Fact]
-    public async Task MaxWithSelectorNonComparable_AlertDiagnostic()
+    public async Task MaxWithSelectorNonComparable_NoDiagnostic()
     {
         const string text = @"
 using System.Collections.Generic;
@@ -114,9 +114,31 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0008")
-            .WithSpan(10, 19, 10, 36)
-            .WithArguments("NotComparable", "Max");
-        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task MaxWithNumericSelector_NoDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var max = items.Max(i => i.Value);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
 }

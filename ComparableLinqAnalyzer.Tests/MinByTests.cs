@@ -201,6 +201,38 @@ public class Program
     }
 
     [Fact]
+    public async Task MinByWithNonComparableStructPropertyKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<Item>();
+        var first = items.MinBy(i => i.ShiftStart);
+    }
+}
+
+public class Item
+{
+    public DateTimeUtc ShiftStart { get; set; }
+}
+
+public readonly record struct DateTimeUtc
+{
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0001")
+            .WithSpan(10, 21, 10, 51)
+            .WithArguments("DateTimeUtc", "MinBy");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
+
+    [Fact]
     public async Task MinByWithComparerAndNonComparableKey_NoDiagnostic()
     {
         const string text = @"

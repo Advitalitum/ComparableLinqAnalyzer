@@ -138,17 +138,13 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
     {
         targetType = null!;
 
-        bool hasComparer = methodSymbol.Parameters.Any(IsComparerType);
-        if (hasComparer)
+        if (methodSymbol.TypeArguments.Length != 1)
             return false;
 
-        bool hasSelector = methodSymbol.Parameters.Any(IsFuncType);
-        int typeArgumentIndex = hasSelector ? 1 : 0;
-
-        if (methodSymbol.TypeArguments.Length <= typeArgumentIndex)
+        if (methodSymbol.Parameters.Any(IsFuncType))
             return false;
 
-        targetType = methodSymbol.TypeArguments[typeArgumentIndex];
+        targetType = methodSymbol.TypeArguments[0];
 
         return true;
     }
@@ -156,12 +152,12 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
     private static bool IsFuncType(IParameterSymbol parameter)
     {
         return parameter.Type.TypeKind == TypeKind.Delegate
-            && parameter.Type.Name.StartsWith("Func`", StringComparison.Ordinal);
+            && parameter.Type.MetadataName.StartsWith("Func`", StringComparison.Ordinal);
     }
 
     private static bool IsComparerType(IParameterSymbol parameter)
     {
-        return parameter.Type.Name == "IComparer`1";
+        return parameter.Type.MetadataName == "IComparer`1";
     }
 
     private static ITypeSymbol UnwrapNullable(ITypeSymbol typeSymbol)

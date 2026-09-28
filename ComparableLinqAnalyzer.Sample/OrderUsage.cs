@@ -17,5 +17,8 @@ public class OrderUsage
         var items = new List<NotComparable>();
         var byElement = items.Order();
         var byElementDesc = items.OrderDescending();
+
+        var withComparer = items.Order(Comparer<NotComparable>.Default);
+        var withComparerDesc = items.OrderDescending(Comparer<NotComparable>.Default);
     }
 }

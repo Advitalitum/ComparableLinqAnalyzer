@@ -16,5 +16,8 @@ public class OrderByUsage
 
         var items = new List<NotComparable>();
         var byKey = items.OrderBy(i => i);
+
+        var withComparer = items.OrderBy(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value)));
+        var withComparerDesc = items.OrderByDescending(i => i, Comparer<NotComparable>.Create((x, y) => x.Value.CompareTo(y.Value)));
     }
 }

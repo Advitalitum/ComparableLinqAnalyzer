@@ -175,4 +175,54 @@ public struct ComparableStruct : IComparable<ComparableStruct>
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
+
+    [Fact]
+    public async Task OrderWithComparerAndNonComparableElement_NoDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var ordered = items.Order(Comparer<NotComparable>.Default);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task OrderDescendingWithComparerAndNonComparableElement_NoDiagnostic()
+    {
+        const string text = @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var ordered = items.OrderDescending(Comparer<NotComparable>.Default);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+    }
 }

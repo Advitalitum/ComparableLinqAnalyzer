@@ -22,7 +22,13 @@ namespace System.Linq
         public static System.Linq.IOrderedEnumerable<TSource> Order<TSource>(this System.Collections.Generic.IEnumerable<TSource> source)
             => System.Linq.Enumerable.OrderBy(source, x => x);
 
+        public static System.Linq.IOrderedEnumerable<TSource> Order<TSource>(this System.Collections.Generic.IEnumerable<TSource> source, System.Collections.Generic.IComparer<TSource>? comparer)
+            => System.Linq.Enumerable.OrderBy(source, x => x);
+
         public static System.Linq.IOrderedEnumerable<TSource> OrderDescending<TSource>(this System.Collections.Generic.IEnumerable<TSource> source)
+            => System.Linq.Enumerable.OrderByDescending(source, x => x);
+
+        public static System.Linq.IOrderedEnumerable<TSource> OrderDescending<TSource>(this System.Collections.Generic.IEnumerable<TSource> source, System.Collections.Generic.IComparer<TSource>? comparer)
             => System.Linq.Enumerable.OrderByDescending(source, x => x);
     }
 }
