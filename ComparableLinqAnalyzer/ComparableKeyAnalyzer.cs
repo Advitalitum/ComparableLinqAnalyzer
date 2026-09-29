@@ -218,23 +218,33 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
         ITypeSymbol? nonGenericComparable = compilation.GetTypeByMetadataName(NonGenericComparableMetadataName);
         ITypeSymbol? genericComparableOpen = compilation.GetTypeByMetadataName(GenericComparableMetadataName);
 
-        foreach (INamedTypeSymbol interfaceSymbol in type.AllInterfaces)
+        if (nonGenericComparable is null && genericComparableOpen is null)
         {
-            if (nonGenericComparable is not null &&
-                SymbolEqualityComparer.Default.Equals(interfaceSymbol, nonGenericComparable))
-            {
-                return true;
-            }
-
-            if (genericComparableOpen is not null &&
-                interfaceSymbol.OriginalDefinition.Equals(genericComparableOpen, SymbolEqualityComparer.Default) &&
-                interfaceSymbol.TypeArguments.Length == 1 &&
-                SymbolEqualityComparer.Default.Equals(interfaceSymbol.TypeArguments.Single(), type))
-            {
-                return true;
-            }
+            return false;
         }
 
-        return false;
+        bool result = type.AllInterfaces.Any(interfaceSymbol =>
+            IsComparableImplementation(
+                interfaceSymbol: interfaceSymbol,
+                type: type,
+                nonGenericComparable: nonGenericComparable,
+                genericComparableOpen: genericComparableOpen));
+
+        return result;
+    }
+
+    private static bool IsComparableImplementation(
+        INamedTypeSymbol interfaceSymbol,
+        ITypeSymbol type,
+        ITypeSymbol? nonGenericComparable,
+        ITypeSymbol? genericComparableOpen)
+    {
+        bool result = SymbolEqualityComparer.Default.Equals(interfaceSymbol, nonGenericComparable)
+            || (genericComparableOpen is not null
+                && SymbolEqualityComparer.Default.Equals(interfaceSymbol.OriginalDefinition, genericComparableOpen)
+                && interfaceSymbol.TypeArguments.Length == 1
+                && SymbolEqualityComparer.Default.Equals(interfaceSymbol.TypeArguments.Single(), type));
+
+        return result;
     }
 }
