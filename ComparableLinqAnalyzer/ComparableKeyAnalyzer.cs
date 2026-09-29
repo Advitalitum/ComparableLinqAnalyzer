@@ -8,12 +8,8 @@ using Microsoft.CodeAnalysis.Operations;
 namespace ComparableLinqAnalyzer;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
+public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
 {
-    private const string LinqNamespace = "System.Linq";
-    private const string GenericComparableMetadataName = "System.IComparable`1";
-    private const string NonGenericComparableMetadataName = "System.IComparable";
-
     private static readonly LocalizableString Title = new LocalizableResourceString(nameof(Resources.AB0003Title),
         Resources.ResourceManager, typeof(Resources));
 
@@ -27,171 +23,197 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
     private const string Category = "Usage";
 
-    public const string DiagnosticId = "CLA0001";
+    private const string DiagnosticId = "CLA0001";
 
     private static readonly DiagnosticDescriptor ComparableRule = new(
         DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
         isEnabledByDefault: true, description: Description);
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(ComparableRule);
+    private const string LinqNamespace = "System.Linq";
+    private const string GenericComparableMetadataName = "System.IComparable`1";
+    private const string NonGenericComparableMetadataName = "System.IComparable";
+
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(ComparableRule);
 
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
+
         context.RegisterOperationAction(AnalyzeInvocation, OperationKind.Invocation);
     }
 
-    private void AnalyzeInvocation(OperationAnalysisContext context)
+    private static void AnalyzeInvocation(OperationAnalysisContext context)
     {
         if (context.Operation is not IInvocationOperation invocationOperation)
+        {
             return;
+        }
 
         IMethodSymbol methodSymbol = invocationOperation.TargetMethod;
-
-        ITypeSymbol targetType;
 
         // Comparer overload. If the comparer is a literal null, LINQ falls back to
         // Comparer<T>.Default at runtime, so the type must still be comparable - such a
         // call is analyzed as the plain overload.
-        bool nullComparer = HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
+        bool hasNullComparerArgument = HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
 
-        if (!TryGetComparableTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType))
-            return;
+        ITypeSymbol? targetType = GetComparableTarget(methodSymbol: methodSymbol, hasNullComparerArgument: hasNullComparerArgument);
 
-        if (targetType is ITypeParameterSymbol or IErrorTypeSymbol)
+        if (targetType is null or ITypeParameterSymbol or IErrorTypeSymbol)
+        {
             return;
+        }
 
         targetType = UnwrapNullable(targetType);
 
         if (IsComparable(type: targetType, compilation: context.Compilation))
+        {
             return;
+        }
 
-        var diagnostic = Diagnostic.Create(ComparableRule,
-            invocationOperation.Syntax.GetLocation(),
-            targetType.ToDisplayString(),
-            methodSymbol.Name);
+        var diagnostic = Diagnostic.Create(
+            descriptor: ComparableRule,
+            location: invocationOperation.Syntax.GetLocation(),
+            messageArgs: [targetType.ToDisplayString(), methodSymbol.Name]);
 
         context.ReportDiagnostic(diagnostic);
     }
 
-    private static bool TryGetComparableTarget(IMethodSymbol methodSymbol, bool nullComparer,
-        out ITypeSymbol targetType)
+    private static ITypeSymbol? GetComparableTarget(IMethodSymbol methodSymbol, bool hasNullComparerArgument)
     {
-        targetType = null!;
-
         if (!IsLinqMethod(methodSymbol))
-            return false;
-
-        return TryGetMinByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetMaxByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetOrderByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetOrderByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetOrderTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetOrderDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetThenByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetThenByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
-            || TryGetMinTarget(methodSymbol: methodSymbol, out targetType)
-            || TryGetMaxTarget(methodSymbol: methodSymbol, out targetType);
-    }
-
-    // Determines whether the comparer overload was passed a literal null (or default).
-    private static bool HasNullComparerArgument(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
-    {
-        for (int i = 0; i < methodSymbol.Parameters.Length; i++)
         {
-            if (!IsComparerType(methodSymbol.Parameters[i]))
-                continue;
-
-            IOperation? argumentValue = invocationOperation.Arguments[i].Value;
-
-            return argumentValue.ConstantValue.HasValue && argumentValue.ConstantValue.Value is null;
+            return null;
         }
 
-        return false;
+        ITypeSymbol? result = methodSymbol.Name switch
+        {
+            "MinBy" or "MaxBy" or "OrderBy" or "OrderByDescending" or "ThenBy" or "ThenByDescending"
+                => GetKeySelectorTarget(methodSymbol: methodSymbol, hasNullComparerArgument: hasNullComparerArgument),
+            "Order" or "OrderDescending"
+                => GetElementTarget(methodSymbol: methodSymbol, hasNullComparerArgument: hasNullComparerArgument),
+            "Min" or "Max"
+                => GetMinMaxTarget(methodSymbol: methodSymbol),
+            _ => null,
+        };
+
+        return result;
+    }
+
+    // Determines whether the comparer overload was passed a literal null (or default). In such
+    // case comparison is done with Comparer<T>.Default, so the key type must still be comparable.
+    private static bool HasNullComparerArgument(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
+    {
+        bool result = methodSymbol.Parameters
+            .Select((parameter, index) => (Parameter: parameter, Index: index))
+            .Where(item => IsComparerType(item.Parameter))
+            .Select(item => invocationOperation.Arguments[item.Index].Value)
+            .Any(argumentValue => argumentValue.ConstantValue is { HasValue: true, Value: null });
+
+        return result;
     }
 
     private static bool IsLinqMethod(IMethodSymbol methodSymbol)
     {
         if (!methodSymbol.IsExtensionMethod)
+        {
             return false;
+        }
 
-        if (methodSymbol.ContainingType?.ContainingNamespace is not INamespaceSymbol namespaceSymbol)
+        if (methodSymbol.ContainingType?.ContainingNamespace is not { } namespaceSymbol)
+        {
             return false;
+        }
 
-        return namespaceSymbol.ToDisplayString() == LinqNamespace;
+        bool result = namespaceSymbol.ToDisplayString() == LinqNamespace;
+
+        return result;
     }
 
-    private static bool TryGetKeySelectorTarget(IMethodSymbol methodSymbol, bool nullComparer,
-        out ITypeSymbol targetType)
+    // The comparer overload has three parameters. With a real comparer comparison is controlled
+    // by the caller, so the key does not need to be comparable. But when the comparer is a
+    // literal null, Comparer<T>.Default is used at runtime and the key must still be comparable.
+    private static ITypeSymbol? GetKeySelectorTarget(IMethodSymbol methodSymbol, bool hasNullComparerArgument)
     {
-        targetType = null!;
-
-        // The comparer overload has three parameters. With a real comparer comparison is
-        // controlled by the caller, so the key does not need to be comparable. But when
-        // the comparer is a literal null, Comparer<T>.Default is used at runtime and the
-        // key must still be comparable.
-        if (methodSymbol.Parameters.Length >= 3 && !nullComparer)
-            return false;
+        if (methodSymbol.Parameters.Length >= 3 && !hasNullComparerArgument)
+        {
+            return null;
+        }
 
         if (methodSymbol.TypeArguments.Length < 2)
-            return false;
+        {
+            return null;
+        }
 
-        targetType = methodSymbol.TypeArguments[1];
+        ITypeSymbol result = methodSymbol.TypeArguments[1];
 
-        return true;
+        return result;
     }
 
-    private static bool TryGetElementTarget(IMethodSymbol methodSymbol, bool nullComparer, out ITypeSymbol targetType)
+    // The Order/OrderDescending comparer overload has two parameters. As with the key selector
+    // above, it is analyzed only when the comparer is a literal null.
+    private static ITypeSymbol? GetElementTarget(IMethodSymbol methodSymbol, bool hasNullComparerArgument)
     {
-        targetType = null!;
-
-        // The Order/OrderDescending comparer overload has two parameters. As with the key
-        // above, analyze it only when the comparer is a literal null.
-        if (methodSymbol.Parameters.Length >= 2 && !nullComparer)
-            return false;
+        if (methodSymbol.Parameters.Length >= 2 && !hasNullComparerArgument)
+        {
+            return null;
+        }
 
         if (methodSymbol.TypeArguments.Length < 1)
-            return false;
+        {
+            return null;
+        }
 
-        targetType = methodSymbol.TypeArguments[0];
+        ITypeSymbol result = methodSymbol.TypeArguments.First();
 
-        return true;
+        return result;
     }
 
-    private static bool TryGetMinMaxTarget(IMethodSymbol methodSymbol, out ITypeSymbol targetType)
+    private static ITypeSymbol? GetMinMaxTarget(IMethodSymbol methodSymbol)
     {
-        targetType = null!;
-
         if (methodSymbol.TypeArguments.Length != 1)
-            return false;
+        {
+            return null;
+        }
 
-        if (methodSymbol.Parameters.Any(IsFuncType))
-            return false;
+        foreach (IParameterSymbol parameter in methodSymbol.Parameters)
+        {
+            if (IsFuncType(parameter))
+            {
+                return null;
+            }
+        }
 
-        targetType = methodSymbol.TypeArguments[0];
+        ITypeSymbol result = methodSymbol.TypeArguments.Single();
 
-        return true;
+        return result;
     }
 
     private static bool IsFuncType(IParameterSymbol parameter)
     {
-        return parameter.Type.TypeKind == TypeKind.Delegate
+        bool result = parameter.Type.TypeKind == TypeKind.Delegate
             && parameter.Type.MetadataName.StartsWith("Func`", StringComparison.Ordinal);
+
+        return result;
     }
 
     private static bool IsComparerType(IParameterSymbol parameter)
     {
-        return parameter.Type.MetadataName == "IComparer`1";
+        bool result = parameter.Type.MetadataName == "IComparer`1";
+
+        return result;
     }
 
     private static ITypeSymbol UnwrapNullable(ITypeSymbol typeSymbol)
     {
         if (typeSymbol is not INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
+        {
             return typeSymbol;
+        }
 
-        return nullable.TypeArguments[0];
+        ITypeSymbol result = nullable.TypeArguments.Single();
+
+        return result;
     }
 
     private static bool IsComparable(ITypeSymbol type, Compilation compilation)
@@ -210,7 +232,7 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
             if (genericComparableOpen is not null &&
                 interfaceSymbol.OriginalDefinition.Equals(genericComparableOpen, SymbolEqualityComparer.Default) &&
                 interfaceSymbol.TypeArguments.Length == 1 &&
-                SymbolEqualityComparer.Default.Equals(interfaceSymbol.TypeArguments[0], type))
+                SymbolEqualityComparer.Default.Equals(interfaceSymbol.TypeArguments.Single(), type))
             {
                 return true;
             }
