@@ -85,24 +85,17 @@ dotnet add package ComparableLinqAnalyzer
 
 ```xml
 <ItemGroup>
-    <PackageReference Include="ComparableLinqAnalyzer" Version="0.0.3" />
+    <PackageReference Include="ComparableLinqAnalyzer" Version="0.0.4" />
 </ItemGroup>
 ```
 
 ## Rules
 
-| Rule ID  | Method            | Severity |
-|----------|-------------------|----------|
-| CLA0001  | `MinBy`           | Error    |
-| CLA0002  | `MaxBy`           | Error    |
-| CLA0003  | `OrderBy`         | Error    |
-| CLA0004  | `OrderByDescending` | Error  |
-| CLA0005  | `Order`           | Error    |
-| CLA0006  | `OrderDescending` | Error    |
-| CLA0007  | `Min`             | Error    |
-| CLA0008  | `Max`             | Error    |
-| CLA0009  | `ThenBy`          | Error    |
-| CLA0010  | `ThenByDescending` | Error   |
+A single rule covers all supported comparable LINQ methods — the diagnostic message reports the invoked method:
+
+| Rule ID  | Methods                                                                                    | Severity |
+|----------|--------------------------------------------------------------------------------------------|----------|
+| CLA0001  | `MinBy`, `MaxBy`, `OrderBy`, `OrderByDescending`, `Order`, `OrderDescending`, `Min`, `Max`, `ThenBy`, `ThenByDescending` | Error    |
 
 ## Content
 

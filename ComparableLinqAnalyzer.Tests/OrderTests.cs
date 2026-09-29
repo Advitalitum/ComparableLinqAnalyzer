@@ -30,7 +30,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0005")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 23, 10, 36)
             .WithArguments("NotComparable", "Order");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -58,7 +58,7 @@ public struct NotComparableStruct
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0005")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 23, 10, 36)
             .WithArguments("NotComparableStruct", "Order");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -114,7 +114,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0006")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 23, 10, 46)
             .WithArguments("NotComparable", "OrderDescending");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -142,7 +142,7 @@ public struct NotComparableStruct
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0006")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 23, 10, 46)
             .WithArguments("NotComparableStruct", "OrderDescending");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -223,7 +223,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0005")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 23, 10, 40)
             .WithArguments("NotComparable", "Order");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -276,7 +276,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0006")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 23, 10, 50)
             .WithArguments("NotComparable", "OrderDescending");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);

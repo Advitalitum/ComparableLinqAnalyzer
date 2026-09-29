@@ -6,16 +6,8 @@ public partial class ComparableKeyAnalyzer
 {
     private const string MinByMethodName = "MinBy";
 
-    public const string MinByDiagnosticId = "CLA0001";
-
-    private static readonly DiagnosticDescriptor MinByRule = new(
-        MinByDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
-        isEnabledByDefault: true, description: Description);
-
-    private static bool TryGetMinByTarget(IMethodSymbol methodSymbol, bool nullComparer, out ITypeSymbol targetType,
-        out DiagnosticDescriptor rule)
+    private static bool TryGetMinByTarget(IMethodSymbol methodSymbol, bool nullComparer, out ITypeSymbol targetType)
     {
-        rule = MinByRule;
         targetType = null!;
 
         if (methodSymbol.Name != MinByMethodName)

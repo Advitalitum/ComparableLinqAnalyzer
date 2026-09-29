@@ -31,7 +31,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0010")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 54)
             .WithArguments("NotComparable", "ThenByDescending");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -60,7 +60,7 @@ public struct NotComparableStruct
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0010")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 54)
             .WithArguments("NotComparableStruct", "ThenByDescending");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -94,7 +94,7 @@ public readonly record struct DateTimeUtc
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0010")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 65)
             .WithArguments("DateTimeUtc", "ThenByDescending");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
@@ -177,7 +177,7 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        var expected = Verifier.Diagnostic("CLA0010")
+        var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 60)
             .WithArguments("NotComparable", "ThenByDescending");
         await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);

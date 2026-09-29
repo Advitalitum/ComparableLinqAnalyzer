@@ -6,16 +6,8 @@ public partial class ComparableKeyAnalyzer
 {
     private const string OrderMethodName = "Order";
 
-    public const string OrderDiagnosticId = "CLA0005";
-
-    private static readonly DiagnosticDescriptor OrderRule = new(
-        OrderDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
-        isEnabledByDefault: true, description: Description);
-
-    private static bool TryGetOrderTarget(IMethodSymbol methodSymbol, bool nullComparer, out ITypeSymbol targetType,
-        out DiagnosticDescriptor rule)
+    private static bool TryGetOrderTarget(IMethodSymbol methodSymbol, bool nullComparer, out ITypeSymbol targetType)
     {
-        rule = OrderRule;
         targetType = null!;
 
         if (methodSymbol.Name != OrderMethodName)

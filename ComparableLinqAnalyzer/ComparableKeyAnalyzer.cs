@@ -27,18 +27,14 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
     private const string Category = "Usage";
 
+    public const string DiagnosticId = "CLA0001";
+
+    private static readonly DiagnosticDescriptor ComparableRule = new(
+        DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
+        isEnabledByDefault: true, description: Description);
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-        ImmutableArray.Create(
-            MinByRule,
-            MaxByRule,
-            OrderByRule,
-            OrderByDescendingRule,
-            OrderRule,
-            OrderDescendingRule,
-            MinRule,
-            MaxRule,
-            ThenByRule,
-            ThenByDescendingRule);
+        ImmutableArray.Create(ComparableRule);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -55,14 +51,13 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         IMethodSymbol methodSymbol = invocationOperation.TargetMethod;
 
         ITypeSymbol targetType;
-        DiagnosticDescriptor rule;
 
         // Comparer overload. If the comparer is a literal null, LINQ falls back to
         // Comparer<T>.Default at runtime, so the type must still be comparable - such a
         // call is analyzed as the plain overload.
         bool nullComparer = HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
 
-        if (!TryGetComparableTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule))
+        if (!TryGetComparableTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType))
             return;
 
         if (targetType is ITypeParameterSymbol or IErrorTypeSymbol)
@@ -73,7 +68,7 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
         if (IsComparable(type: targetType, compilation: context.Compilation))
             return;
 
-        var diagnostic = Diagnostic.Create(rule,
+        var diagnostic = Diagnostic.Create(ComparableRule,
             invocationOperation.Syntax.GetLocation(),
             targetType.ToDisplayString(),
             methodSymbol.Name);
@@ -82,24 +77,23 @@ public partial class ComparableKeyAnalyzer : DiagnosticAnalyzer
     }
 
     private static bool TryGetComparableTarget(IMethodSymbol methodSymbol, bool nullComparer,
-        out ITypeSymbol targetType, out DiagnosticDescriptor rule)
+        out ITypeSymbol targetType)
     {
         targetType = null!;
-        rule = null!;
 
         if (!IsLinqMethod(methodSymbol))
             return false;
 
-        return TryGetMinByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetMaxByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetOrderByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetOrderByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetOrderTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetOrderDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetThenByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetThenByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType, out rule)
-            || TryGetMinTarget(methodSymbol: methodSymbol, out targetType, out rule)
-            || TryGetMaxTarget(methodSymbol: methodSymbol, out targetType, out rule);
+        return TryGetMinByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetMaxByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetOrderByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetOrderByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetOrderTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetOrderDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetThenByTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetThenByDescendingTarget(methodSymbol: methodSymbol, nullComparer: nullComparer, out targetType)
+            || TryGetMinTarget(methodSymbol: methodSymbol, out targetType)
+            || TryGetMaxTarget(methodSymbol: methodSymbol, out targetType);
     }
 
     // Determines whether the comparer overload was passed a literal null (or default).

@@ -6,16 +6,9 @@ public partial class ComparableKeyAnalyzer
 {
     private const string OrderDescendingMethodName = "OrderDescending";
 
-    public const string OrderDescendingDiagnosticId = "CLA0006";
-
-    private static readonly DiagnosticDescriptor OrderDescendingRule = new(
-        OrderDescendingDiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
-        isEnabledByDefault: true, description: Description);
-
     private static bool TryGetOrderDescendingTarget(IMethodSymbol methodSymbol, bool nullComparer,
-        out ITypeSymbol targetType, out DiagnosticDescriptor rule)
+        out ITypeSymbol targetType)
     {
-        rule = OrderDescendingRule;
         targetType = null!;
 
         if (methodSymbol.Name != OrderDescendingMethodName)
