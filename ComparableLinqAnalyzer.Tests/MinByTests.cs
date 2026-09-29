@@ -366,4 +366,61 @@ public struct ImplementsComparableStruct : IComparable
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
+
+    [Fact]
+    public async Task MinByWithNullableValueTypeNonComparableKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<EmptyStruct>();
+        var first = items.MinBy(i => (EmptyStruct?)i);
+    }
+}
+
+public struct EmptyStruct
+{
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0001")
+            .WithSpan(11, 21, 11, 54)
+            .WithArguments("EmptyStruct", "MinBy");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task MinByWithNullableReferenceTypeKey_AlertDiagnostic()
+    {
+        const string text = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public void Main()
+    {
+        var items = new List<NotComparable>();
+        var first = items.MinBy(i => (NotComparable?)i);
+    }
+}
+
+public class NotComparable
+{
+    public int Value { get; set; }
+}
+" + TestSources.Linq;
+
+        var expected = Verifier.Diagnostic("CLA0001")
+            .WithSpan(11, 21, 11, 56)
+            .WithArguments("NotComparable", "MinBy");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
+    }
 }

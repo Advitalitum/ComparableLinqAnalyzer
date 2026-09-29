@@ -176,12 +176,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
             return null;
         }
 
-        foreach (IParameterSymbol parameter in methodSymbol.Parameters)
+        if (methodSymbol.Parameters.Any(IsFuncType))
         {
-            if (IsFuncType(parameter))
-            {
-                return null;
-            }
+            return null;
         }
 
         ITypeSymbol result = methodSymbol.TypeArguments.Single();
