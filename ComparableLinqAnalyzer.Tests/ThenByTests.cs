@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Xunit;
 using Verifier =
-    Microsoft.CodeAnalysis.CSharp.Testing.XUnit.AnalyzerVerifier<
+    ComparableLinqAnalyzer.Tests.CustomAnalyzerVerifier<
         ComparableLinqAnalyzer.ComparableKeyAnalyzer>;
 
 namespace ComparableLinqAnalyzer.Tests;
@@ -29,7 +29,7 @@ public class NotComparable
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 44)
@@ -58,7 +58,7 @@ public struct NotComparableStruct
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 44)
@@ -92,7 +92,7 @@ public class Item
 public readonly record struct DateTimeUtc
 {
 }
-" + TestSources.Linq;
+";
 
         var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 55)
@@ -122,7 +122,7 @@ public class Item
     public int Value { get; set; }
     public string Name { get; set; }
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -149,7 +149,7 @@ public class NotComparable
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -175,7 +175,7 @@ public class NotComparable
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 23, 11, 50)
@@ -207,7 +207,7 @@ public class ImplementsGenericComparable : IComparable<ImplementsGenericComparab
 
     public int CompareTo(ImplementsGenericComparable other) => Value.CompareTo(other.Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -236,7 +236,7 @@ public class ImplementsComparable : IComparable
 
     public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparable)obj).Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -265,7 +265,7 @@ public struct ComparableStruct : IComparable<ComparableStruct>
 
     public int CompareTo(ComparableStruct other) => Value.CompareTo(other.Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -294,7 +294,7 @@ public struct ImplementsComparableStruct : IComparable
 
     public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparableStruct)obj).Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }

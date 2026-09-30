@@ -29,7 +29,6 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
         DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Error,
         isEnabledByDefault: true, description: Description);
 
-    private const string LinqNamespace = "System.Linq";
     private const string GenericComparableMetadataName = "System.IComparable`1";
     private const string NonGenericComparableMetadataName = "System.IComparable";
 
@@ -52,7 +51,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
         IMethodSymbol methodSymbol = invocationOperation.TargetMethod;
 
-        ITypeSymbol? targetType = GetComparableTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
+        LinqSymbols linqSymbols = GetLinqSymbols(context.Compilation);
+
+        ITypeSymbol? targetType = GetComparableTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation, linqSymbols: linqSymbols);
 
         if (targetType is null or ITypeParameterSymbol or IErrorTypeSymbol)
         {
@@ -74,9 +75,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(diagnostic);
     }
 
-    private static ITypeSymbol? GetComparableTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
+    private static ITypeSymbol? GetComparableTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation, LinqSymbols linqSymbols)
     {
-        if (!IsLinqMethod(methodSymbol))
+        if (!IsLinqMethod(methodSymbol: methodSymbol, linqSymbols: linqSymbols))
         {
             return null;
         }
@@ -84,11 +85,11 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
         ITypeSymbol? result = methodSymbol.Name switch
         {
             "MinBy" or "MaxBy" or "OrderBy" or "OrderByDescending" or "ThenBy" or "ThenByDescending"
-                => GetKeySelectorTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation),
+                => GetKeySelectorTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation, linqSymbols: linqSymbols),
             "Order" or "OrderDescending"
-                => GetElementTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation),
+                => GetElementTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation, linqSymbols: linqSymbols),
             "Min" or "Max"
-                => GetMinMaxTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation),
+                => GetMinMaxTarget(methodSymbol: methodSymbol, invocationOperation: invocationOperation, linqSymbols: linqSymbols),
             _ => null,
         };
 
@@ -97,9 +98,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
     // Determines whether the comparer overload was passed a literal null (or default). In such
     // case comparison is done with Comparer<T>.Default, so the key type must still be comparable.
-    private static bool HasNullComparerArgument(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
+    private static bool HasNullComparerArgument(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation, LinqSymbols linqSymbols)
     {
-        // All the analyzed comparer overloads have at least two parameters (source + comparer).
+        // All analyzed comparer overloads have at least two parameters (source + comparer).
         if (methodSymbol.Parameters.Length < 2)
         {
             return false;
@@ -107,26 +108,22 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
         bool result = methodSymbol.Parameters
             .Select((parameter, index) => (Parameter: parameter, Index: index))
-            .Where(item => IsComparerType(item.Parameter))
+            .Where(item => IsComparerType(item.Parameter, linqSymbols))
             .Select(item => invocationOperation.Arguments[item.Index].Value)
             .Any(argumentValue => argumentValue.ConstantValue is { HasValue: true, Value: null });
 
         return result;
     }
 
-    private static bool IsLinqMethod(IMethodSymbol methodSymbol)
+    private static bool IsLinqMethod(IMethodSymbol methodSymbol, LinqSymbols linqSymbols)
     {
         if (!methodSymbol.IsExtensionMethod)
         {
             return false;
         }
 
-        if (methodSymbol.ContainingType?.ContainingNamespace is not { } namespaceSymbol)
-        {
-            return false;
-        }
-
-        bool result = namespaceSymbol.ToDisplayString() == LinqNamespace;
+        bool result = linqSymbols.Enumerable is not null
+            && SymbolEqualityComparer.Default.Equals(methodSymbol.ContainingType, linqSymbols.Enumerable);
 
         return result;
     }
@@ -134,9 +131,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
     // The comparer overload has three parameters. With a real comparer comparison is controlled
     // by the caller, so the key does not need to be comparable. But when the comparer is a
     // literal null, Comparer<T>.Default is used at runtime and the key must still be comparable.
-    private static ITypeSymbol? GetKeySelectorTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
+    private static ITypeSymbol? GetKeySelectorTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation, LinqSymbols linqSymbols)
     {
-        if (methodSymbol.Parameters.Length >= 3 && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation))
+        if (methodSymbol.Parameters.Length >= 3 && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation, linqSymbols: linqSymbols))
         {
             return null;
         }
@@ -153,9 +150,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
     // Order/OrderDescending comparer overload has two parameters. As with the key selector
     // above, it is analyzed only when the comparer is a literal null.
-    private static ITypeSymbol? GetElementTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
+    private static ITypeSymbol? GetElementTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation, LinqSymbols linqSymbols)
     {
-        if (methodSymbol.Parameters.Length >= 2 && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation))
+        if (methodSymbol.Parameters.Length >= 2 && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation, linqSymbols: linqSymbols))
         {
             return null;
         }
@@ -176,9 +173,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
     // (source, Func<TSource,TResult>) compare TResult - the selector result. For the selector
     // overloads TResult may be a separate type argument or fixed inside the Func delegate
     // (e.g. Min<TSource>(source, Func<TSource,int>)), so it is always read from the delegate.
-    private static ITypeSymbol? GetMinMaxTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
+    private static ITypeSymbol? GetMinMaxTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation, LinqSymbols linqSymbols)
     {
-        if (methodSymbol.Parameters.FirstOrDefault(IsFuncType) is { } selectorParameter)
+        if (methodSymbol.Parameters.FirstOrDefault(parameter => IsFuncType(parameter, linqSymbols)) is { } selectorParameter)
         {
             if (selectorParameter.Type is not INamedTypeSymbol { TypeArguments.Length: > 0 } selectorType)
             {
@@ -195,7 +192,7 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
             return null;
         }
 
-        if (methodSymbol.Parameters.Any(IsComparerType) && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation))
+        if (methodSymbol.Parameters.Any(parameter => IsComparerType(parameter, linqSymbols)) && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation, linqSymbols: linqSymbols))
         {
             return null;
         }
@@ -205,18 +202,19 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
         return elementResult;
     }
 
-    private static bool IsFuncType(IParameterSymbol parameter)
+    private static bool IsFuncType(IParameterSymbol parameter, LinqSymbols linqSymbols)
     {
-        bool result = parameter.Type.TypeKind == TypeKind.Delegate
-            && parameter.Type.MetadataName.StartsWith("Func`", StringComparison.Ordinal);
+        bool result = linqSymbols.Func is not null
+            && parameter.Type.TypeKind == TypeKind.Delegate
+            && SymbolEqualityComparer.Default.Equals(parameter.Type.OriginalDefinition, linqSymbols.Func);
 
         return result;
     }
 
-    private static bool IsComparerType(IParameterSymbol parameter)
+    private static bool IsComparerType(IParameterSymbol parameter, LinqSymbols linqSymbols)
     {
-        bool result = parameter.Type.MetadataName == "IComparer`1"
-            && parameter.Type.ContainingNamespace?.ToDisplayString() == "System.Collections.Generic";
+        bool result = linqSymbols.Comparer is not null
+            && SymbolEqualityComparer.Default.Equals(parameter.Type.OriginalDefinition, linqSymbols.Comparer);
 
         return result;
     }
@@ -266,5 +264,37 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
                 && SymbolEqualityComparer.Default.Equals(interfaceSymbol.TypeArguments.Single(), type));
 
         return result;
+    }
+
+    // Symbols of the BCL types used to identify the analyzed methods/parameters. Resolving them via
+    // GetTypeByMetadataName guarantees exact system types are matched, not their namesakes from
+    // user-defined namespaces.
+    private static LinqSymbols GetLinqSymbols(Compilation compilation)
+    {
+        var result = new LinqSymbols(
+            enumerable: compilation.GetTypeByMetadataName("System.Linq.Enumerable"),
+            comparer: compilation.GetTypeByMetadataName("System.Collections.Generic.IComparer`1"),
+            func: compilation.GetTypeByMetadataName("System.Func`2"));
+
+        return result;
+    }
+
+    private sealed class LinqSymbols
+    {
+        public INamedTypeSymbol? Enumerable { get; }
+
+        public INamedTypeSymbol? Comparer { get; }
+
+        public INamedTypeSymbol? Func { get; }
+
+        public LinqSymbols(
+            INamedTypeSymbol? enumerable,
+            INamedTypeSymbol? comparer,
+            INamedTypeSymbol? func)
+        {
+            Enumerable = enumerable;
+            Comparer = comparer;
+            Func = func;
+        }
     }
 }

@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Xunit;
 using Verifier =
-    Microsoft.CodeAnalysis.CSharp.Testing.XUnit.AnalyzerVerifier<
+    ComparableLinqAnalyzer.Tests.CustomAnalyzerVerifier<
         ComparableLinqAnalyzer.ComparableKeyAnalyzer>;
 
 namespace ComparableLinqAnalyzer.Tests;
@@ -29,7 +29,7 @@ public class NotComparable
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(11, 21, 11, 40)
@@ -57,7 +57,7 @@ public struct NotComparableStruct
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 21, 10, 40)
@@ -88,7 +88,7 @@ public struct ComparableStruct : IComparable<ComparableStruct>
 
     public int CompareTo(ComparableStruct other) => Value.CompareTo(other.Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -114,7 +114,7 @@ public class NotComparable
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -139,7 +139,7 @@ public class NotComparable
 {
     public int Value { get; set; }
 }
-" + TestSources.Linq;
+";
 
         var expected = Verifier.Diagnostic("CLA0001")
             .WithSpan(10, 21, 10, 46)
@@ -162,7 +162,7 @@ public class Program
         var first = items.MaxBy(i => i, null);
     }
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -190,7 +190,7 @@ public class ImplementsGenericComparable : IComparable<ImplementsGenericComparab
 
     public int CompareTo(ImplementsGenericComparable other) => Value.CompareTo(other.Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -218,7 +218,7 @@ public class ImplementsComparable : IComparable
 
     public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparable)obj).Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
@@ -246,7 +246,7 @@ public struct ImplementsComparableStruct : IComparable
 
     public int CompareTo(object obj) => Value.CompareTo(((ImplementsComparableStruct)obj).Value);
 }
-" + TestSources.Linq;
+";
 
         await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
     }
