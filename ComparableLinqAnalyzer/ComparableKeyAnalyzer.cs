@@ -205,7 +205,8 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
     private static bool IsComparerType(IParameterSymbol parameter)
     {
-        bool result = parameter.Type.MetadataName == "IComparer`1";
+        bool result = parameter.Type.MetadataName == "IComparer`1"
+            && parameter.Type.ContainingNamespace?.ToDisplayString() == "System.Collections.Generic";
 
         return result;
     }
