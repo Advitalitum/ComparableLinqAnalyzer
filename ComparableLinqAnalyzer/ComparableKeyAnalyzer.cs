@@ -99,6 +99,12 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
     // case comparison is done with Comparer<T>.Default, so the key type must still be comparable.
     private static bool HasNullComparerArgument(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
     {
+        // All the analyzed comparer overloads have at least two parameters (source + comparer).
+        if (methodSymbol.Parameters.Length < 2)
+        {
+            return false;
+        }
+
         bool result = methodSymbol.Parameters
             .Select((parameter, index) => (Parameter: parameter, Index: index))
             .Where(item => IsComparerType(item.Parameter))
@@ -130,9 +136,7 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
     // literal null, Comparer<T>.Default is used at runtime and the key must still be comparable.
     private static ITypeSymbol? GetKeySelectorTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
     {
-        bool hasNullComparerArgument = HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
-
-        if (methodSymbol.Parameters.Length >= 3 && !hasNullComparerArgument)
+        if (methodSymbol.Parameters.Length >= 3 && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation))
         {
             return null;
         }
@@ -151,9 +155,7 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
     // above, it is analyzed only when the comparer is a literal null.
     private static ITypeSymbol? GetElementTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
     {
-        bool hasNullComparerArgument = HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
-
-        if (methodSymbol.Parameters.Length >= 2 && !hasNullComparerArgument)
+        if (methodSymbol.Parameters.Length >= 2 && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation))
         {
             return null;
         }
@@ -183,9 +185,7 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
             return null;
         }
 
-        bool hasNullComparerArgument = HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation);
-
-        if (methodSymbol.Parameters.Any(IsComparerType) && !hasNullComparerArgument)
+        if (methodSymbol.Parameters.Any(IsComparerType) && !HasNullComparerArgument(methodSymbol: methodSymbol, invocationOperation: invocationOperation))
         {
             return null;
         }
