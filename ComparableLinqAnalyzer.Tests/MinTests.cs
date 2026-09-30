@@ -37,7 +37,7 @@ public class NotComparable
     }
 
     [Fact]
-    public async Task MinWithSelectorNonComparable_NoDiagnostic()
+    public async Task MinWithSelectorNonComparable_AlertDiagnostic()
     {
         const string text = @"
 using System.Collections.Generic;
@@ -58,7 +58,10 @@ public class NotComparable
 }
 " + TestSources.Linq;
 
-        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+        var expected = Verifier.Diagnostic("CLA0001")
+            .WithSpan(10, 19, 10, 36)
+            .WithArguments("NotComparable", "Min");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
     }
 
     [Fact]
@@ -115,7 +118,7 @@ public struct NotComparableStruct
     }
 
     [Fact]
-    public async Task MinWithSelectorNonComparableStruct_NoDiagnostic()
+    public async Task MinWithSelectorNonComparableStruct_AlertDiagnostic()
     {
         const string text = @"
 using System.Collections.Generic;
@@ -136,7 +139,10 @@ public struct NotComparableStruct
 }
 " + TestSources.Linq;
 
-        await Verifier.VerifyAnalyzerAsync(text).ConfigureAwait(false);
+        var expected = Verifier.Diagnostic("CLA0001")
+            .WithSpan(10, 19, 10, 36)
+            .WithArguments("NotComparableStruct", "Min");
+        await Verifier.VerifyAnalyzerAsync(text, expected).ConfigureAwait(false);
     }
 
     [Fact]

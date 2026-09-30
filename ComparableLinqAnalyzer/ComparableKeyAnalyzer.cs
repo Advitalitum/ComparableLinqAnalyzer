@@ -172,15 +172,25 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
 
     // Min/Max also have comparer overloads: (source, comparer). A real comparer makes the element
     // valid regardless of comparability, so the element is analyzed only when the comparer is
-    // literal null (Comparer<T>.Default) or there is no comparer at all.
+    // literal null (Comparer<T>.Default) or there is no comparer at all. Selector overloads
+    // (source, Func<TSource,TResult>) compare TResult - the selector result. For the selector
+    // overloads TResult may be a separate type argument or fixed inside the Func delegate
+    // (e.g. Min<TSource>(source, Func<TSource,int>)), so it is always read from the delegate.
     private static ITypeSymbol? GetMinMaxTarget(IMethodSymbol methodSymbol, IInvocationOperation invocationOperation)
     {
-        if (methodSymbol.TypeArguments.Length != 1)
+        if (methodSymbol.Parameters.FirstOrDefault(IsFuncType) is { } selectorParameter)
         {
-            return null;
+            if (selectorParameter.Type is not INamedTypeSymbol { TypeArguments.Length: > 0 } selectorType)
+            {
+                return null;
+            }
+
+            ITypeSymbol result = selectorType.TypeArguments[selectorType.TypeArguments.Length - 1];
+
+            return result;
         }
 
-        if (methodSymbol.Parameters.Any(IsFuncType))
+        if (methodSymbol.TypeArguments.Length == 0)
         {
             return null;
         }
@@ -190,9 +200,9 @@ public sealed class ComparableKeyAnalyzer : DiagnosticAnalyzer
             return null;
         }
 
-        ITypeSymbol result = methodSymbol.TypeArguments.Single();
+        ITypeSymbol elementResult = methodSymbol.TypeArguments[methodSymbol.TypeArguments.Length - 1];
 
-        return result;
+        return elementResult;
     }
 
     private static bool IsFuncType(IParameterSymbol parameter)
